@@ -466,10 +466,10 @@ List<Particle> createParticles(size Int) {
     i!to(size) {
         particles!push(Particle(
             i,
-            raylib$random(450), raylib$random(800),
+            raylib$random(448), raylib$random(798),
             raylib$random(8) - 4, raylib$random(8) - 4,
-            1,
-            raylib$Color(U8.wrap(raylib$random(255)), U8.wrap(raylib$random(255)), U8.wrap(raylib$random(255)), U8.wrap(raylib$random(255)))
+            2,
+            raylib$Color(U8.wrap(raylib$random(255)), U8.wrap(raylib$random(255)), U8.wrap(raylib$random(255)), U8(255))
         ));
     }
 
