@@ -1,0 +1,118 @@
+package raylib;
+
+import core$;
+
+type Raylib = #handle{
+    cType = "zane_raylib_t";
+}
+
+// Foreign functions
+
+@primitives$Unit _initWindow(
+    this Raylib,
+    width @primitives$I32,
+    height @primitives$I32,
+    title @primitives$String
+) mut foreign "zane_rl_init_window";
+
+@primitives$Bool _windowShouldClose(
+    this Raylib
+) foreign "zane_rl_window_should_close";
+
+@primitives$Unit _setTargetFPS(
+    this Raylib,
+    fps @primitives$I32
+) mut foreign "zane_rl_set_target_fps";
+
+@primitives$Unit _beginDrawing(
+    this Raylib
+) mut foreign "zane_rl_begin_drawing";
+
+@primitives$Unit _clearBackground(
+    this Raylib,
+    r @primitives$I32,
+    g @primitives$I32,
+    b @primitives$I32,
+    a @primitives$I32
+) mut foreign "zane_rl_clear_background";
+
+@primitives$Unit _drawText(
+    this Raylib,
+    text @primitives$String,
+    x @primitives$I32,
+    y @primitives$I32,
+    size @primitives$I32,
+    r @primitives$I32,
+    g @primitives$I32,
+    b @primitives$I32,
+    a @primitives$I32
+) mut foreign "zane_rl_draw_text";
+
+@primitives$Unit _endDrawing(
+    this Raylib
+) mut foreign "zane_rl_end_drawing";
+
+@primitives$Unit _closeWindow(
+    this Raylib
+) mut foreign "zane_rl_close_window";
+
+// Public Zane methods
+
+Unit initWindow(
+    this Raylib,
+    width I32,
+    height I32,
+    title String
+) mut {
+    this!_initWindow(width, height, title);
+    return Unit();
+}
+
+Bool windowShouldClose(this Raylib) =>
+    Bool(this:_windowShouldClose());
+
+Unit setTargetFPS(this Raylib, fps I32) mut {
+    this!_setTargetFPS(fps);
+    return Unit();
+}
+
+Unit beginDrawing(this Raylib) mut {
+    this!_beginDrawing();
+    return Unit();
+}
+
+Unit clearBackground(
+    this Raylib,
+    r I32,
+    g I32,
+    b I32,
+    a I32
+) mut {
+    this!_clearBackground(r, g, b, a);
+    return Unit();
+}
+
+Unit drawText(
+    this Raylib,
+    text String,
+    x I32,
+    y I32,
+    size I32,
+    r I32,
+    g I32,
+    b I32,
+    a I32
+) mut {
+    this!_drawText(text, x, y, size, r, g, b, a);
+    return Unit();
+}
+
+Unit endDrawing(this Raylib) mut {
+    this!_endDrawing();
+    return Unit();
+}
+
+Unit closeWindow(this Raylib) mut {
+    this!_closeWindow();
+    return Unit();
+}

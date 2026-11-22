@@ -1,0 +1,52 @@
+package raylibdemo;
+
+import core$;
+import raylib;
+
+Unit main() {
+    rl raylib$Raylib foreign "zane_raylib";
+
+    // Create the window
+    rl!raylib$initWindow(
+        I32(800),
+        I32(450),
+        String("Zane + Raylib")
+    );
+
+    rl!raylib$setTargetFPS(I32(60));
+
+    // Game loop
+    rl!work(Bool(this raylib$Raylib) mut {
+        if(this:windowShouldClose()) {
+            return Bool(false);
+        }
+
+        this!raylib$beginDrawing();
+
+        this!raylib$clearBackground(
+            I32(25),
+            I32(25),
+            I32(35),
+            I32(255)
+        );
+
+        this!raylib$drawText(
+            String("Hello from Zane!"),
+            I32(190),
+            I32(200),
+            I32(30),
+            I32(255),
+            I32(255),
+            I32(255),
+            I32(255)
+        );
+
+        this!raylib$endDrawing();
+
+        return Bool(true);
+    });
+
+    rl!raylib$closeWindow();
+
+    return Unit();
+}

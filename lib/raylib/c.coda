@@ -1,0 +1,13 @@
+c [
+    setting  value                                  target
+    archive  vendor/raylib/src/libraylib.a         *-linux-*
+    include  vendor/raylib/src                     *-linux-*
+    include  vendor/raylib/src/external/glfw/include  *-linux-*
+
+    system   GL                                     *-linux-*
+    system   m                                      *-linux-*
+    system   pthread                                *-linux-*
+    system   dl                                     *-linux-*
+    system   rt                                     *-linux-*
+    system   X11                                    *-linux-*
+]

@@ -1,0 +1,6 @@
+zane-commit 17a37782ef397049740d6b4fd9a451059fe02140
+
+resolutions [
+    key url commit
+    std https://github.com/zane-lang/std 26f30e36eb33bee13053aa9149383f70da9ab2c1
+]
