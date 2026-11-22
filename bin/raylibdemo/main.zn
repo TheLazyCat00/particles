@@ -23,22 +23,16 @@ Unit main() {
 
         this!raylib$beginDrawing();
 
-        this!raylib$clearBackground(
-            I32(25),
-            I32(25),
-            I32(35),
-            I32(255)
-        );
+        bgColor raylib$Color(24, 25, 35, 255);
+        this!raylib$clearBackground(bgColor);
 
+        textColor raylib$Color(255, 255, 255, 255);
         this!raylib$drawText(
             String("Hello from Zane!"),
             I32(190),
             I32(200),
             I32(30),
-            I32(255),
-            I32(255),
-            I32(255),
-            I32(255)
+            textColor
         );
 
         this!raylib$endDrawing();

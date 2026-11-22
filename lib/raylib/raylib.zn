@@ -6,6 +6,25 @@ type Raylib = #handle{
     cType = "zane_raylib_t";
 }
 
+type Color = struct {
+    r @primitives$U8;
+    g @primitives$U8;
+    b @primitives$U8;
+    a @primitives$U8;
+}
+
+Color(
+    r U8,
+    g U8,
+    b U8,
+    a U8
+) => init {
+    r = @primitives$U8(r);
+    g = @primitives$U8(g);
+    b = @primitives$U8(b);
+    a = @primitives$U8(a);
+}
+
 // Foreign functions
 
 @primitives$Unit _initWindow(
@@ -30,10 +49,7 @@ type Raylib = #handle{
 
 @primitives$Unit _clearBackground(
     this Raylib,
-    r @primitives$I32,
-    g @primitives$I32,
-    b @primitives$I32,
-    a @primitives$I32
+    color Color
 ) mut foreign "zane_rl_clear_background";
 
 @primitives$Unit _drawText(
@@ -42,11 +58,17 @@ type Raylib = #handle{
     x @primitives$I32,
     y @primitives$I32,
     size @primitives$I32,
-    r @primitives$I32,
-    g @primitives$I32,
-    b @primitives$I32,
-    a @primitives$I32
+    color Color
 ) mut foreign "zane_rl_draw_text";
+
+@primitives$Unit _drawRect(
+    this Raylib,
+    x @primitives$I32,
+    y @primitives$I32,
+    width @primitives$I32,
+    height @primitives$I32,
+    color Color
+) mut foreign "zane_rl_draw_rect";
 
 @primitives$Unit _endDrawing(
     this Raylib
@@ -83,12 +105,9 @@ Unit beginDrawing(this Raylib) mut {
 
 Unit clearBackground(
     this Raylib,
-    r I32,
-    g I32,
-    b I32,
-    a I32
+    color Color
 ) mut {
-    this!_clearBackground(r, g, b, a);
+    this!_clearBackground(color);
     return Unit();
 }
 
@@ -98,12 +117,21 @@ Unit drawText(
     x I32,
     y I32,
     size I32,
-    r I32,
-    g I32,
-    b I32,
-    a I32
+    color Color
 ) mut {
-    this!_drawText(text, x, y, size, r, g, b, a);
+    this!_drawText(text, x, y, size, color);
+    return Unit();
+}
+
+Unit drawRect(
+    this Raylib,
+    x I32,
+    y I32,
+    width I32,
+    height I32,
+    color Color
+) mut {
+    this!_drawRect(x, y, width, height, color);
     return Unit();
 }
 
