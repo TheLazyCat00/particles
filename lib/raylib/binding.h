@@ -5,50 +5,50 @@
 #include <stdint.h>
 
 typedef struct zane_raylib_t {
-    int unused;
+	int unused;
 } zane_raylib_t;
 
 extern zane_raylib_t zane_raylib;
 
 void zane_rl_init_window(
-    zane_raylib_t *rl,
-    int32_t width,
-    int32_t height,
-    const char *title
+	zane_raylib_t *rl,
+	int32_t width,
+	int32_t height,
+	const char *title
 );
 
 bool zane_rl_window_should_close(
-    const zane_raylib_t *rl
+	const zane_raylib_t *rl
 );
 
 void zane_rl_set_target_fps(
-    zane_raylib_t *rl,
-    int32_t fps
+	zane_raylib_t *rl,
+	int32_t fps
 );
 
 void zane_rl_begin_drawing(zane_raylib_t *rl);
 
 void zane_rl_clear_background(
-    zane_raylib_t *rl,
-    Color color
+	zane_raylib_t *rl,
+	Color color
 );
 
 void zane_rl_draw_text(
-    zane_raylib_t *rl,
-    const char *text,
-    int32_t x,
-    int32_t y,
-    int32_t size,
-    Color color
+	zane_raylib_t *rl,
+	const char *text,
+	int32_t x,
+	int32_t y,
+	int32_t size,
+	Color color
 );
 
 void zane_rl_draw_rect(
-    zane_raylib_t *rl,
-    int32_t x,
-    int32_t y,
-    int32_t width,
-    int32_t height,
-    Color color
+	zane_raylib_t *rl,
+	int32_t x,
+	int32_t y,
+	int32_t width,
+	int32_t height,
+	Color color
 );
 
 void zane_rl_end_drawing(zane_raylib_t *rl);

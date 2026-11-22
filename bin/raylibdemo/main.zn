@@ -4,43 +4,43 @@ import core$;
 import raylib;
 
 Unit main() {
-    rl raylib$Raylib foreign "zane_raylib";
+	rl raylib$Raylib foreign "zane_raylib";
 
-    // Create the window
-    rl!raylib$initWindow(
-        I32(800),
-        I32(450),
-        String("Zane + Raylib")
-    );
+	// Create the window
+	rl!raylib$initWindow(
+		I32(800),
+		I32(450),
+		String("Zane + Raylib")
+	);
 
-    rl!raylib$setTargetFPS(I32(60));
+	rl!raylib$setTargetFPS(I32(60));
 
-    // Game loop
-    rl!work(Bool(this raylib$Raylib) mut {
-        if(this:windowShouldClose()) {
-            return Bool(false);
-        }
+	// Game loop
+	rl!work(Bool(this raylib$Raylib) mut {
+		if(this:windowShouldClose()) {
+			return Bool(false);
+		}
 
-        this!raylib$beginDrawing();
+		this!raylib$beginDrawing();
 
-        bgColor raylib$Color(24, 25, 35, 255);
-        this!raylib$clearBackground(bgColor);
+		bgColor raylib$Color(24, 25, 35, 255);
+		this!raylib$clearBackground(bgColor);
 
-        textColor raylib$Color(255, 255, 255, 255);
-        this!raylib$drawText(
-            String("Hello from Zane!"),
-            I32(190),
-            I32(200),
-            I32(30),
-            textColor
-        );
+		textColor raylib$Color(255, 255, 255, 255);
+		this!raylib$drawText(
+			String("Hello from Zane!"),
+			I32(190),
+			I32(200),
+			I32(30),
+			textColor
+		);
 
-        this!raylib$endDrawing();
+		this!raylib$endDrawing();
 
-        return Bool(true);
-    });
+		return Bool(true);
+	});
 
-    rl!raylib$closeWindow();
+	rl!raylib$closeWindow();
 
-    return Unit();
+	return Unit();
 }
