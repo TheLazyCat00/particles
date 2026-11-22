@@ -3,44 +3,536 @@ package raylibdemo;
 import core$;
 import raylib;
 
+
+// ============================================================
+// PARTICLE
+// ============================================================
+
+type Particle = struct {
+    id Int;
+
+    x Int;
+    y Int;
+
+    vx Int;
+    vy Int;
+
+    radius Int;
+
+    color raylib$Color;
+}
+
+Particle(
+    id Int,
+    x Int,
+    y Int,
+    vx Int,
+    vy Int,
+    radius Int,
+    color raylib$Color
+) => init{id; x; y; vx; vy; radius; color;}
+
+
+// ============================================================
+// WORLD
+// ============================================================
+
+// The state shared by all workers.
+//
+// particles: Current, committed particle positions.
+// pending:   Results being collected for the next tick.
+// completed: Number of workers that have finished.
+// generation: Number of completed simulation ticks.
+
+type World = struct {
+    particles List<Particle>;
+    pending List<Particle>;
+
+    completed Int;
+    generation Int;
+
+    width Int;
+    height Int;
+}
+
+World(
+    particles List<Particle>,
+    width Int,
+    height Int
+) => init {
+    particles = particles;
+    pending = particles;
+
+    completed = Int(0);
+    generation = Int(0);
+
+    width = width;
+    height = height;
+}
+
+
+// ============================================================
+// WORKER TASK AND RESULT
+// ============================================================
+
+type ParticleTask = struct {
+    index Int;
+    particle Particle;
+}
+
+ParticleTask(
+    index Int,
+    particle Particle
+) => init{index; particle;}
+
+
+type ParticleResult = struct {
+    index Int;
+    particle Particle;
+}
+
+ParticleResult(
+    index Int,
+    particle Particle
+) => init{index; particle;}
+
+
+// ============================================================
+// PARTICLE PHYSICS
+// ============================================================
+
+Unit advance(
+    this Particle,
+    world World
+) mut {
+
+    // Detect collisions using the positions and velocities
+    // from the same simulation snapshot.
+
+    collided Bool = Bool(false);
+
+    i Int = Int(1);
+
+    i!to(world.particles:size()) {
+
+        other Particle = world.particles[i];
+
+        if(other.id ~= this.id) {
+
+            dx Int = other.x - this.x;
+            dy Int = other.y - this.y;
+
+            minDistance Int = this.radius + other.radius;
+
+            distanceSquared Int =
+                dx * dx + dy * dy;
+
+            minDistanceSquared Int =
+                minDistance * minDistance;
+
+            if(distanceSquared < minDistanceSquared) {
+
+                // Positive means the particles are approaching.
+                relativeVx Int = this.vx - other.vx;
+                relativeVy Int = this.vy - other.vy;
+
+                approach Int =
+                    dx * relativeVx +
+                    dy * relativeVy;
+
+                if(approach > Int(0)) {
+
+                    if(collided == Bool(false)) {
+
+                        // Simple collision response.
+                        // Reverse the particle's velocity.
+
+                        this.vx = ~this.vx;
+                        this.vy = ~this.vy;
+
+                        collided = Bool(true);
+                    }
+                }
+            }
+        }
+    }
+
+
+    // Move the particle.
+
+    this.x = this.x + this.vx;
+    this.y = this.y + this.vy;
+
+
+    // --------------------------------------------------------
+    // LEFT WALL
+    // --------------------------------------------------------
+
+    if(this.x < this.radius) {
+
+        this.x = this.radius;
+
+        if(this.vx < Int(0)) {
+            this.vx = ~this.vx;
+        }
+    }
+
+
+    // --------------------------------------------------------
+    // RIGHT WALL
+    // --------------------------------------------------------
+
+    rightEdge Int = world.width - this.radius;
+
+    if(this.x > rightEdge) {
+
+        this.x = rightEdge;
+
+        if(this.vx > Int(0)) {
+            this.vx = ~this.vx;
+        }
+    }
+
+
+    // --------------------------------------------------------
+    // TOP WALL
+    // --------------------------------------------------------
+
+    if(this.y < this.radius) {
+
+        this.y = this.radius;
+
+        if(this.vy < Int(0)) {
+            this.vy = ~this.vy;
+        }
+    }
+
+
+    // --------------------------------------------------------
+    // BOTTOM WALL
+    // --------------------------------------------------------
+
+    bottomEdge Int = world.height - this.radius;
+
+    if(this.y > bottomEdge) {
+
+        this.y = bottomEdge;
+
+        if(this.vy > Int(0)) {
+            this.vy = ~this.vy;
+        }
+    }
+
+    return Unit();
+}
+
+
+// ============================================================
+// WORKER STEP
+// ============================================================
+
+// Every task executes exactly once.
+//
+// It receives:
+// - Its own particle.
+// - A snapshot of the shared World.
+// - A function to publish its result.
+//
+// Returning false removes the worker from the pool.
+
+updateParticle Bool(
+    this ParticleTask,
+    shared World,
+    publish Unit[ParticleResult]
+) mut {
+
+    this.particle!advance(shared);
+
+    publish(
+        ParticleResult(
+            this.index,
+            this.particle
+        )
+    );
+
+    return Bool(false);
+}
+
+
+// ============================================================
+// FUNNEL
+// ============================================================
+
+// The funnel is the ONLY writer of the shared World.
+//
+// It collects particle results in pending.
+//
+// Once every particle has submitted a result,
+// it commits the entire new simulation state.
+
+applyParticleResult Unit(
+    this World,
+    event ParticleResult
+) mut {
+
+    // Store the result at the particle's original index.
+
+    this.pending[event.index] = event.particle;
+
+    this.completed = this.completed + Int(1);
+
+
+    // Check whether every particle has finished.
+
+    if(this.completed == this.particles:size()) {
+
+        // Commit the complete next generation.
+
+        this.particles = this.pending;
+
+        // Prepare the next result buffer.
+
+        this.pending = this.particles;
+
+        this.completed = Int(0);
+
+        this.generation = this.generation + Int(1);
+    }
+
+    return Unit();
+}
+
+
+// ============================================================
+// APPLICATION STATE
+// ============================================================
+
+type UpdateState = #struct {
+    rl &raylib$Raylib;
+
+    pool &WorkerPool<
+        ParticleTask,
+        World,
+        ParticleResult
+    >;
+
+    launchedGeneration Int;
+}
+
+UpdateState(
+    rl &raylib$Raylib,
+    pool &WorkerPool<
+        ParticleTask,
+        World,
+        ParticleResult
+    >,
+    launchedGeneration Int
+) => init {
+    rl;
+    pool;
+    launchedGeneration;
+}
+
+
+// ============================================================
+// START A GENERATION
+// ============================================================
+
+// Start exactly one worker task for every particle.
+
+Unit launchGeneration(
+    this UpdateState,
+    world World
+) mut {
+
+    i Int = Int(1);
+
+    i!to(world.particles:size()) {
+
+        task ParticleTask(
+            i,
+            world.particles[i]
+        );
+
+        this.pool!start(
+            task,
+            updateParticle
+        );
+    }
+
+    return Unit();
+}
+
+
+// ============================================================
+// RENDERING AND MAIN LOOP
+// ============================================================
+
+updateLoop Bool(
+    this UpdateState
+) mut {
+
+    if(this.rl:windowShouldClose()) {
+        return Bool(false);
+    }
+
+
+    // Read a coherent snapshot of the current World.
+
+    world World = this.pool:state();
+
+
+    // If the previous generation is complete,
+    // start the next simulation tick.
+
+    if(world.generation > this.launchedGeneration) {
+
+        this.launchedGeneration = world.generation;
+
+        this!launchGeneration(world);
+    }
+
+
+    // --------------------------------------------------------
+    // DRAWING
+    // --------------------------------------------------------
+
+    this.rl!beginDrawing();
+
+    bgColor raylib$Color(
+        U8(24),
+        U8(25),
+        U8(35),
+        U8(255)
+    );
+
+    this.rl!clearBackground(bgColor);
+
+
+    // Draw every particle from the committed World.
+
+    i Int = Int(1);
+
+    i!to(world.particles:size()) {
+
+        particle Particle = world.particles[i];
+
+        position raylib$Vec2(
+            I32.wrap(particle.x - particle.radius),
+            I32.wrap(particle.y - particle.radius)
+        );
+
+        dimensions raylib$Vec2(
+            I32.wrap(particle.radius * Int(2)),
+            I32.wrap(particle.radius * Int(2))
+        );
+
+        this.rl!drawRect(
+            position,
+            dimensions,
+            particle.color
+        );
+    }
+
+
+    // Optional title.
+
+    this.rl!drawText(
+        String("Zane Particle Simulation"),
+        raylib$Vec2(I32(15), I32(15)),
+        I32(20),
+        raylib$Color(
+            U8(255),
+            U8(255),
+            U8(255),
+            U8(255)
+        )
+    );
+
+    this.rl!endDrawing();
+
+    return Bool(true);
+}
+
+
+// ============================================================
+// INITIAL PARTICLES
+// ============================================================
+
+List<Particle> createParticles(size Int) {
+    particles List<Particle> = List(Particle);
+
+    i Int(0);
+    i!to(size) {
+        particles!push(Particle(
+            i,
+            raylib$random(450), raylib$random(800),
+            raylib$random(8) - 4, raylib$random(8) - 4,
+            1,
+            raylib$Color(U8.wrap(raylib$random(255)), U8.wrap(raylib$random(255)), U8.wrap(raylib$random(255)), U8.wrap(raylib$random(255)))
+        ));
+    }
+
+    return particles;
+}
+
+
+// ============================================================
+// MAIN
+// ============================================================
+
 Unit main() {
-	rl raylib$Raylib foreign "zane_raylib";
+    rl raylib$Raylib foreign "zane_raylib";
 
-	// Create the window
-	rl!raylib$initWindow(
-		I32(800),
-		I32(450),
-		String("Zane + Raylib")
-	);
+    // Initialize Raylib
+    rl!initWindow(
+        I32(800),
+        I32(450),
+        String("Zane Particle Simulation")
+    );
 
-	rl!raylib$setTargetFPS(I32(60));
+    rl!setTargetFPS(I32(60));
 
-	// Game loop
-	rl!work(Bool(this raylib$Raylib) mut {
-		if(this:windowShouldClose()) {
-			return Bool(false);
-		}
 
-		this!raylib$beginDrawing();
+    // Create particles
+    particles List<Particle> = createParticles(500);
 
-		bgColor raylib$Color(24, 25, 35, 255);
-		this!raylib$clearBackground(bgColor);
 
-		textColor raylib$Color(255, 255, 255, 255);
-		this!raylib$drawText(
-			String("Hello from Zane!"),
-			I32(190),
-			I32(200),
-			I32(30),
-			textColor
-		);
+    // Create the initial world
+    initialWorld World(
+        particles,
+        Int(800),
+        Int(450)
+    );
 
-		this!raylib$endDrawing();
 
-		return Bool(true);
-	});
+    // Create WorkerPool
+    pool WorkerPool(
+        ParticleTask,
+        initialWorld,
+        applyParticleResult
+    );
 
-	rl!raylib$closeWindow();
 
-	return Unit();
+    // Create UpdateState DIRECTLY from the writable
+    // Raylib capability.
+    state UpdateState(
+        rl,
+        pool,
+        Int(0)
+    );
+
+
+    // Start the first generation
+    state!launchGeneration(initialWorld);
+
+
+    // Start rendering
+    state!work(updateLoop);
+
+
+    // All workers have finished before we get here.
+    rl!closeWindow();
+
+    return Unit();
 }

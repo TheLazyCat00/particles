@@ -10,6 +10,8 @@ typedef struct zane_raylib_t {
 
 extern zane_raylib_t zane_raylib;
 
+int64_t zane_rl_random(int64_t max);
+
 void zane_rl_init_window(
 	zane_raylib_t *rl,
 	int32_t width,

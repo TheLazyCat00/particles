@@ -25,7 +25,15 @@ Color(
 	a = @primitives$U8(a);
 }
 
+type Vec2 = struct {
+	x I32;
+	y I32;
+}
+
+Vec2(x I32, y I32) => init{x; y;}
+
 // Foreign functions
+@primitives$I64 _random(max @primitives$I64) foreign "zane_rl_random";
 
 @primitives$Unit _initWindow(
 	this Raylib,
@@ -79,6 +87,7 @@ Color(
 ) mut foreign "zane_rl_close_window";
 
 // Public Zane methods
+Int random(max Int) => Int(_random(max));
 
 Unit initWindow(
 	this Raylib,
@@ -114,24 +123,21 @@ Unit clearBackground(
 Unit drawText(
 	this Raylib,
 	text String,
-	x I32,
-	y I32,
+	pos Vec2,
 	size I32,
 	color Color
 ) mut {
-	this!_drawText(text, x, y, size, color);
+	this!_drawText(text, pos.x, pos.y, size, color);
 	return Unit();
 }
 
 Unit drawRect(
 	this Raylib,
-	x I32,
-	y I32,
-	width I32,
-	height I32,
+	pos Vec2,
+	dims Vec2,
 	color Color
 ) mut {
-	this!_drawRect(x, y, width, height, color);
+	this!_drawRect(pos.x, pos.y, dims.x, dims.y, color);
 	return Unit();
 }
 

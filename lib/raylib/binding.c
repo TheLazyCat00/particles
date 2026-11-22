@@ -3,6 +3,10 @@
 
 zane_raylib_t zane_raylib = {0};
 
+int64_t zane_rl_random(int64_t max) {
+	return GetRandomValue(0, max);
+}
+
 void zane_rl_init_window(
 	zane_raylib_t *rl,
 	int32_t width,
